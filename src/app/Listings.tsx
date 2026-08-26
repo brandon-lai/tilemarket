@@ -50,8 +50,10 @@ export default function Listings({
               </tr>
             )}
             {listings.map((l, i) => {
-              const dir =
-                l.shareDelta > 0 ? "up" : l.shareDelta < 0 ? "down" : "flat";
+              // Coloured by the number in this cell, not by share change:
+              // a red arrow beside "0.0%" reads as broken.
+              const change = l.change24h ?? 0;
+              const dir = change > 0 ? "up" : change < 0 ? "down" : "flat";
               return (
                 <tr key={l.domain}>
                   <td className="col-rank num">{i + 1}</td>

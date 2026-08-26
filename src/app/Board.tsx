@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Listing } from "@/lib/board";
 import { letterTileColor, rampStep } from "@/lib/color";
 import { formatCentsCompact, formatPercent } from "@/lib/money";
@@ -46,16 +46,26 @@ function useReducedMotion(): boolean {
 /** The number of tiles that fit is a function of the canvas, so measure it. */
 function useSize(ref: React.RefObject<HTMLDivElement | null>) {
   const [size, setSize] = useState({ w: 0, h: 0 });
-  useEffect(() => {
+
+  useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const ro = new ResizeObserver(([entry]) => {
-      const box = entry.contentRect;
-      setSize({ w: Math.round(box.width), h: Math.round(box.height) });
-    });
+
+    const measure = () => {
+      const box = el.getBoundingClientRect();
+      const next = { w: Math.round(box.width), h: Math.round(box.height) };
+      setSize((prev) => (prev.w === next.w && prev.h === next.h ? prev : next));
+    };
+
+    // Measure synchronously on mount. Waiting for the first ResizeObserver
+    // callback leaves the board blank for a frame, and in environments that
+    // never fire one it stays blank forever.
+    measure();
+    const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
   }, [ref]);
+
   return size;
 }
 
@@ -213,8 +223,30 @@ function Tile({
   const showAmount = showDomain && h > 44;
   const showChange = showAmount && h > 66;
 
-  const direction =
-    placed.spotlight || l.shareDelta === 0 ? "flat" : l.shareDelta > 0 ? "up" : "down";
+  // The spec wants the favicon above the domain and the domain shown from
+  // 24px of height. Those two rules cannot both hold: a 20px icon plus its
+  // margin is already 24px, so on a short tile the icon would push the domain
+  // out of view entirely. Text wins on short tiles, because a tile with no
+  // name on it is worth nothing to the person who paid for it. The icon comes
+  // back as soon as there is room for it and all three lines, and a tile too
+  // small for any text at all shows the icon alone as its only identity.
+  const showIcon = showDomain ? h > 78 : w >= 26 && h >= 26;
+
+  // The top strip tracks share of the board, which is what actually moved
+  // when somebody else paid. The number below it is the listing's own change.
+  //
+  // A dead band around zero matters here: without it every listing that
+  // simply had a quiet day shows red, because somebody else's payment diluted
+  // it by a rounding error, and the board becomes a wall of red that says
+  // nothing.
+  const strip =
+    l.gained24hCents > 0
+      ? "up"
+      : l.shareDelta < -0.0015
+        ? "down"
+        : "flat";
+  const change = l.change24h ?? 0;
+  const direction = change > 0 ? "up" : change < 0 ? "down" : "flat";
 
   return (
     <a
@@ -236,20 +268,21 @@ function Tile({
         onOutbid(l.domain);
       }}
     >
-      <span className={`tile__strip tile__strip--${direction}`} aria-hidden="true" />
-      <span className="tile__body">
-        {l.faviconUrl ? (
+      <span className={`tile__strip tile__strip--${strip}`} aria-hidden="true" />
+      <span className={`tile__body${showIcon ? "" : " tile__body--tight"}`}>
+        {showIcon &&
+          (l.faviconUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img className="tile__icon" src={l.faviconUrl} alt="" width={20} height={20} />
-        ) : (
-          <span
-            className="tile__letter"
-            style={{ background: letterTileColor(l.domain) }}
-            aria-hidden="true"
-          >
-            {l.domain[0]?.toUpperCase()}
-          </span>
-        )}
+            <img className="tile__icon" src={l.faviconUrl} alt="" width={20} height={20} />
+          ) : (
+            <span
+              className="tile__letter"
+              style={{ background: letterTileColor(l.domain) }}
+              aria-hidden="true"
+            >
+              {l.domain[0]?.toUpperCase()}
+            </span>
+          ))}
         {showDomain && <span className="tile__domain">{l.domain}</span>}
         {showAmount && (
           <span className="tile__amount num">{formatCentsCompact(l.totalCents)}</span>

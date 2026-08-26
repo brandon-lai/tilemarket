@@ -10,7 +10,10 @@
     "typecheck": "tsc --noEmit",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx scripts/seed.ts",
-    "test": "tsx --test tests/*.test.ts"
+    "test": "tsx --test tests/*.test.ts",
+    "test:webhook": "tsx --env-file=.env tests/webhook.integration.mjs",
+    "check:favicons": "tsx scripts/check-favicons.ts",
+    "check:favicon-e2e": "tsx scripts/check-favicon-e2e.ts"
   },
   "dependencies": {
     "next": "15.5.4",

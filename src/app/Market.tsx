@@ -62,17 +62,10 @@ export default function Market({
         enabled={paymentsEnabled}
       />
       <p className="hint">
-        {paymentsEnabled ? (
-          <>
-            $1 minimum, $5,000 maximum per payment. Paying again on the same domain
-            adds to its total. No account, no email.
-          </>
-        ) : (
-          <>
-            This deployment has no payment keys, so the board below is a generated
-            example. Everything else on the page is real.
-          </>
-        )}
+        $1 minimum, $5,000 maximum per payment. Paying again on the same domain adds
+        to its total. No account, no email.
+        {!paymentsEnabled && " Payments are not configured on this deployment yet."}
+        {board.demo && " The listings below are a generated example, not real ones."}
       </p>
 
       {claimedDomain && paymentId && (
