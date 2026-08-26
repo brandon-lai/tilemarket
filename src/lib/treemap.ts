@@ -126,8 +126,37 @@ export function weightsFor(
 ): number[] {
   const raw = totals.map((t) => Math.pow(Math.max(t, 0), exponent));
   const sum = raw.reduce((s, v) => s + v, 0);
-  if (sum <= 0) return raw.map(() => 1);
-  const floor = sum * floorShare;
+  if (sum <= 0 || raw.length === 0) return raw.map(() => 1);
+
+  // The floor has to be a share of the *final* total, not the raw one.
+  // Raising a sliver raises the total too, which would push it straight back
+  // under the floor. Solve for the floor value instead of iterating:
+  //
+  //   f = floorShare * (sumOfUnflooredWeights + flooredCount * f)
+  //
+  // rearranged to f = floorShare * rest / (1 - floorShare * flooredCount).
+  // Each pass can only add items to the floored set, so this settles in at
+  // most `raw.length` passes.
+  let floored = new Set<number>();
+  let floor = 0;
+
+  for (let pass = 0; pass <= raw.length; pass++) {
+    const denom = 1 - floorShare * floored.size;
+    // More tiles than the floor can fit on one board. Nothing can satisfy the
+    // guarantee, so give every tile the same area rather than an arbitrary
+    // partial one.
+    if (denom <= 0) return raw.map(() => 1);
+
+    let rest = 0;
+    for (let i = 0; i < raw.length; i++) if (!floored.has(i)) rest += raw[i];
+    floor = (floorShare * rest) / denom;
+
+    const next = new Set(floored);
+    for (let i = 0; i < raw.length; i++) if (raw[i] < floor) next.add(i);
+    if (next.size === floored.size) break;
+    floored = next;
+  }
+
   return raw.map((v) => Math.max(v, floor));
 }
 
