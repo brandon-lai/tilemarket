@@ -1,0 +1,10 @@
+# Never let local secrets or a local DATABASE_URL reach a deployment. Vercel
+# reads environment from the project settings, not from files in the upload.
+.env
+.env.*
+!.env.example
+
+node_modules
+.next
+tests
+scripts/check-*.ts
