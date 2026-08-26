@@ -16,21 +16,21 @@
     "check:favicon-e2e": "tsx scripts/check-favicon-e2e.ts"
   },
   "dependencies": {
-    "next": "15.5.4",
+    "@vercel/blob": "^2.8.0",
+    "next": "^15.5.24",
+    "postgres": "3.4.7",
     "react": "19.1.1",
     "react-dom": "19.1.1",
-    "postgres": "3.4.7",
+    "sharp": "^0.35.4",
     "stripe": "18.5.0",
-    "tldts": "7.0.19",
-    "sharp": "0.34.4",
-    "@vercel/blob": "2.0.0"
+    "tldts": "7.0.19"
   },
   "devDependencies": {
     "@types/node": "22.18.6",
     "@types/react": "19.1.13",
     "@types/react-dom": "19.1.9",
-    "typescript": "5.9.2",
+    "dotenv": "17.2.2",
     "tsx": "4.20.6",
-    "dotenv": "17.2.2"
+    "typescript": "5.9.2"
   }
 }
