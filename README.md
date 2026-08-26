@@ -1,5 +1,7 @@
 # tilemarket
 
+**Live:** https://tilemarket.vercel.app
+
 A public board where anyone pays to list a domain. Every listing is a tile.
 Tile area is the amount paid. The board looks like a stock market heatmap.
 
@@ -149,6 +151,24 @@ The PRD left four questions open. These are the answers this build ships with:
 - **Day 30, when nobody is bidding**, is the actual risk in this category and
   nothing in the code solves it. The spotlight rotation and the full tail list
   are the two hedges that are in scope here.
+
+## Deployment status
+
+The Vercel project builds from this repo on every push to `main`.
+
+The deployment currently runs in **no-database mode**: it renders a
+deterministic generated board so the layout, the animation, the spotlight
+rotation and the full list are all real and inspectable, while every write path
+refuses rather than pretending to have worked. Two credentials turn it into a
+live product, and neither can be created on the owner's behalf:
+
+1. **Postgres.** Any connection string works. Set `DATABASE_URL` in the Vercel
+   project, then run `npm run db:migrate` against it.
+2. **Stripe.** Set `STRIPE_SECRET_KEY` and, after creating a webhook endpoint
+   pointing at `/api/stripe/webhook`, `STRIPE_WEBHOOK_SECRET`.
+
+Nothing else changes. `hasDatabase` and `hasStripe` are read at every entry
+point, so the app switches over on the next deploy.
 
 ## Admin
 
